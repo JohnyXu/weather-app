@@ -7,8 +7,8 @@ node_sass 引入SCSS支持
 redux 状态管理工具
 redux-thunk 数据异步处理库
 reselect 抽取redux中的中间state，方便访问
-nock
-redux-mock-store
+nock Http服务器模拟
+redux-mock-store 一个模拟store的redux异步库
 
 以下是typescritp 类型定义
 @types/lodash
@@ -325,3 +325,85 @@ module.exports = {
 "prettier": "^2.2.1",
 ```
 
+## 测试
+`import { render, RenderResult } from "@testing-library/react";`
+
+测试普通的ui组件
+```ts
+  let renderResult: RenderResult;
+
+  const props = {
+    title: "HUMIDITY",
+    value: 12,
+  };
+
+  beforeEach(() => {
+    renderResult = render(<Meta {...props} />);
+  });
+
+  it("should render day", () => {
+    const { getByText } = renderResult;
+
+    expect(getByText(props.title)).toBeInTheDocument();
+    expect(getByText(props.value)).toBeInTheDocument();
+  });
+```
+
+测试action的用例
+```ts
+describe("current action", () => {
+  it("should create an action to get current weather", () => {
+    expect(getCurrentWeather()).toEqual({
+      type: GET_CURRENT_WEATHER,
+    });
+  });
+
+  it("should create a failure action", () => {
+    const error = { code: 404, message: "not found" };
+    expect(getCurrentWeatherFailure(error)).toEqual({
+      type: GET_CURRENT_WEATHER_FAILURE,
+      payload: error,
+    });
+  });
+});
+```
+
+测试reducer和异步处理函数
+```ts
+  it("should handle get current weather", () => {
+  const action = {
+    type: GET_CURRENT_WEATHER,
+  };
+  expect(
+    currentReducer(initalState, action as IGetCurrentWeatherAction)
+  ).toEqual({
+    loading: true,
+    data: null,
+    error: null,
+  });
+});
+```
+
+测试异步处理函数
+```ts
+it("creates GET_CURRENT_WEATHER when fetching current weather", () => {
+    nock(WHEATHER_BASE_URL)
+      .get(`/current?city=melbourne&&key=${process.env.REACT_APP_API_KEY}`)
+      .reply(200, { data: [expectData], count: 1 });
+
+    const store = mockStore({ current: {} });
+
+    const thunkDispatch = store.dispatch as ThunkDispatch<
+      IStore,
+      unknown,
+      CurrentWeatherActionTypes
+    >;
+
+    return thunkDispatch(fetchCurrentWeather("melbourne")).then(() => {
+      expect(store.getActions()).toEqual([
+        getCurrentWeather(),
+        getCurrentWeatherSuccess(expectData),
+      ]);
+    });
+  });
+```

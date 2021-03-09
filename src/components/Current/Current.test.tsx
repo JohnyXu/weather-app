@@ -2,7 +2,7 @@ import React from "react";
 import { render, RenderResult } from "@testing-library/react";
 import Current from "./Current";
 
-describe("<Meta>", () => {
+describe("<Current>", () => {
   let renderResult: RenderResult;
 
   const props = {
